@@ -1,0 +1,22 @@
+syntax = "proto3";
+
+package greet.v1;
+
+import "validate/validate.proto";
+
+option go_package = "example/gen/greet/v1;greetv1";
+
+message GreetRequest {
+  string name = 1 [(validate.rules).string = {
+    pattern:   "^[^[0-9][A-Za-z]+([^[0-9][A-Za-z]+)*$",
+    max_bytes: 256,
+  }];
+}
+
+message GreetResponse {
+  string greeting = 1;
+}
+
+service GreetService {
+  rpc Greet(GreetRequest) returns (GreetResponse) {}
+}
