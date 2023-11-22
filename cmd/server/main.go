@@ -9,6 +9,7 @@ import (
 	"connectrpc.com/connect"
 	"golang.org/x/net/http2"
 	"golang.org/x/net/http2/h2c"
+	"google.golang.org/protobuf/proto"
 
 	"github.com/bufbuild/protovalidate-go"
 	"github.com/bufbuild/protovalidate-go/legacy"
@@ -26,8 +27,7 @@ func (s *GreetServer) Greet(
 	req *connect.Request[greetv1.GreetRequest],
 ) (*connect.Response[greetv1.GreetResponse], error) {
 	log.Println("Request headers: ", req.Header())
-	if err := s.Validator.Validate(req.Msg); err != nil {
-		log.Println(err.Error())
+	if err := foo(s.Validator, req.Msg); err != nil {
 		return nil, connect.NewError(connect.CodeInvalidArgument, err)
 	}
 	res := connect.NewResponse(&greetv1.GreetResponse{
@@ -55,4 +55,18 @@ func main() {
 	); err != nil {
 		log.Fatal(err)
 	}
+}
+
+func foo(v *protovalidate.Validator, in proto.Message) error {
+	// get descriptor by name
+	nameFieldDescriptor := in.ProtoReflect().Descriptor().Fields().ByName("name")
+	// get value by descriptor
+	nameValue := in.ProtoReflect().Get(nameFieldDescriptor)
+	// print value without unmarshaling
+	log.Println("name: ", nameValue.String())
+	// validate
+	if err := v.Validate(in); err != nil {
+		return err
+	}
+	return nil
 }
